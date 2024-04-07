@@ -92,7 +92,7 @@ if [ "$set_time_color" != "" ]; then
 fi
 
 num_colors=${#colors[@]}
-factor=$(echo "scale=5; 0.4 * $num_colors" | bc) # adjusted to fit into 24 hours
+factor=$(echo "scale=5; 0.41 * ($num_colors + 1)" | bc) # adjusted to fit into 24 hours
 
 for ((i = 0; i < ${#interpolated_colors[@]}; i++)); do
     color=$(echo "${interpolated_colors[$i]}"| cut -d',' -f2)
