@@ -5,7 +5,7 @@
 # uses https://github.com/wroberts/rogauracore
 
 # options for the program: -h=help, -t=test
-while getopts ":sc:ht" opt; do
+while getopts ":s:c:ht" opt; do
     case ${opt} in
         h )
             echo "Usage: $0 [-h] [-t] [-s]"
@@ -47,8 +47,8 @@ colors=(
 
 if [ "$custom_colors" != "" ]; then
     colors=("${custom_colors[@]}")
+    echo "Colors set to: ${colors[@]}"
 fi
-echo "Colors set to: ${colors[@]}"
 
 # Function to interpolate between two colors
 interpolate_color() {
