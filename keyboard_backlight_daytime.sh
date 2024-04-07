@@ -5,13 +5,15 @@
 # uses https://github.com/wroberts/rogauracore
 
 # options for the program: -h=help, -t=test
-while getopts ":s:ht" opt; do
+while getopts ":sc:ht" opt; do
     case ${opt} in
         h )
             echo "Usage: $0 [-h] [-t] [-s]"
             echo "  -h: Display this help message"
             echo "  -t: Test mode, print the color and time instead of changing the keyboard color"
             echo "  -s: use the color defined for that time instead of interpolating between colors"
+            echo "  -c: set the colors to interpolate between, quotes and comma separated"
+            echo "      e.g. -c \"red,255,0,0;blue,0,0,255\""
             exit 0
             ;;
         t )
@@ -19,6 +21,9 @@ while getopts ":s:ht" opt; do
             ;;
         s )
             set_time_color=$OPTARG
+            ;;
+        c )
+            IFS=';' read -r -a custom_colors <<< "$OPTARG"
             ;;
         \? )
             echo "Invalid option: $OPTARG" 1>&2
@@ -29,7 +34,6 @@ done
 
 # Define colors
 colors=(
-    "brown,150,75,0"
     "red,255,20,22"
     "orange,255,165,0"
     "yellow,250,235,54"
@@ -40,6 +44,11 @@ colors=(
     "violet,112,54,157"
     "brown,150,75,0"
 )
+
+if [ "$custom_colors" != "" ]; then
+    colors=("${custom_colors[@]}")
+fi
+echo "Colors set to: ${colors[@]}"
 
 # Function to interpolate between two colors
 interpolate_color() {
@@ -72,6 +81,8 @@ interpolated_colors=()
 for ((i = 0; i < ${#colors[@]} - 1; i++)); do
     interpolated_colors+=($(interpolate_color "${colors[$i]}" "${colors[$i+1]}" "$steps"))
 done
+# add the last color interpolated to the first color
+interpolated_colors+=($(interpolate_color "${colors[${#colors[@]}-1]}" "${colors[0]}" "$steps"))
 
 current_hour=$(date +"%H")
 current_minute=$(date +"%M")
