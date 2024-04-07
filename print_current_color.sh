@@ -5,16 +5,20 @@
 # uses https://github.com/wroberts/rogauracore
 
 # options for the program: -h=help, -t=test
-while getopts ":ht" opt; do
+while getopts ":s:ht" opt; do
     case ${opt} in
         h )
-            echo "Usage: $0 [-h] [-t]"
+            echo "Usage: $0 [-h] [-t] [-s]"
             echo "  -h: Display this help message"
             echo "  -t: Test mode, print the color and time instead of changing the keyboard color"
+            echo "  -s: use the color defined for that time instead of interpolating between colors"
             exit 0
             ;;
         t )
             test_mode=true
+            ;;
+        s )
+            set_time_color=$OPTARG
             ;;
         \? )
             echo "Invalid option: $OPTARG" 1>&2
@@ -71,6 +75,11 @@ done
 
 current_hour=$(date +"%H")
 current_minute=$(date +"%M")
+if [ "$set_time_color" != "" ]; then
+    current_hour=$(echo "$set_time_color" | cut -d':' -f1)
+    current_minute=$(echo "$set_time_color" | cut -d':' -f2)
+fi
+
 num_colors=${#colors[@]}
 factor=$(echo "scale=5; 0.4 * $num_colors" | bc) # adjusted to fit into 24 hours
 
