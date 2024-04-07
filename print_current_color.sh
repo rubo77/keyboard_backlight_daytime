@@ -2,15 +2,39 @@
 
 # defines a set of colors, interpolates between them to create a smooth gradient
 # and then changes the keyboard backlight color to match the current time
-# uses https://github.com/wroberts/rogauracore
 
-red="232,20,22"
-orange="255,165,0"
-yellow="250,235,54"
-green="121,195,20"
-blue="72,125,231"
-indigo="75,54,157"
-violet="112,54,157"
+# options for the program: -h=help, -t=test
+while getopts ":ht" opt; do
+    case ${opt} in
+        h )
+            echo "Usage: $0 [-h] [-t]"
+            echo "  -h: Display this help message"
+            echo "  -t: Test mode, print the color and time instead of changing the keyboard color"
+            exit 0
+            ;;
+        t )
+            test_mode=true
+            ;;
+        \? )
+            echo "Invalid option: $OPTARG" 1>&2
+            exit 1
+            ;;
+    esac
+done
+
+# Define colors
+colors=(
+    "brown,150,75,0"
+    "red,255,20,22"
+    "orange,255,165,0"
+    "yellow,250,235,54"
+    "white,255,255,255"
+    "green,121,255,20"
+    "blue,72,125,255"
+    "indigo,75,54,157"
+    "violet,112,54,157"
+    "brown,150,75,0"
+)
 
 # Function to interpolate between two colors
 interpolate_color() {
@@ -18,18 +42,21 @@ interpolate_color() {
     local end_color="$2"
     local steps="$3"
 
-    start_r=$(echo "$start_color" | cut -d',' -f1)
-    start_g=$(echo "$start_color" | cut -d',' -f2)
-    start_b=$(echo "$start_color" | cut -d',' -f3)
+    start_color_name=$(echo "$start_color" | cut -d',' -f1)
 
-    end_r=$(echo "$end_color" | cut -d',' -f1)
-    end_g=$(echo "$end_color" | cut -d',' -f2)
-    end_b=$(echo "$end_color" | cut -d',' -f3)
+    start_r=$(echo "$start_color" | cut -d',' -f2)
+    start_g=$(echo "$start_color" | cut -d',' -f3)
+    start_b=$(echo "$start_color" | cut -d',' -f4)
+
+    end_r=$(echo "$end_color" | cut -d',' -f2)
+    end_g=$(echo "$end_color" | cut -d',' -f3)
+    end_b=$(echo "$end_color" | cut -d',' -f4)
 
     for ((i = 0; i <= steps; i++)); do
         curr_r=$(echo "scale=0; $start_r + ($end_r - $start_r) * $i / $steps" | bc)
         curr_g=$(echo "scale=0; $start_g + ($end_g - $start_g) * $i / $steps" | bc)
         curr_b=$(echo "scale=0; $start_b + ($end_b - $start_b) * $i / $steps" | bc)
+        echo -n "$start_color_name,"
         printf "%02X%02X%02X\n" "$curr_r" "$curr_g" "$curr_b"
     done
 }
@@ -37,27 +64,26 @@ interpolate_color() {
 # Interpolate colors
 steps=10
 interpolated_colors=()
-interpolated_colors+=($(interpolate_color "$red" "$orange" "$steps"))
-interpolated_colors+=($(interpolate_color "$orange" "$yellow" "$steps"))
-interpolated_colors+=($(interpolate_color "$yellow" "$green" "$steps"))
-interpolated_colors+=($(interpolate_color "$green" "$blue" "$steps"))
-interpolated_colors+=($(interpolate_color "$blue" "$indigo" "$steps"))
-interpolated_colors+=($(interpolate_color "$indigo" "$violet" "$steps"))
+for ((i = 0; i < ${#colors[@]} - 1; i++)); do
+    interpolated_colors+=($(interpolate_color "${colors[$i]}" "${colors[$i+1]}" "$steps"))
+done
 
 current_hour=$(date +"%H")
 current_minute=$(date +"%M")
-factor=2.72   # adjusted to fit into 24 hours
+num_colors=${#colors[@]}
+factor=$(echo "scale=5; 0.4 * $num_colors" | bc) # adjusted to fit into 24 hours
 
-for ((i=0; i<${#interpolated_colors[@]}; i++)); do
-    color=${interpolated_colors[$i]}
-    hour_decimal=$(echo "scale=2; $i / $factor" | bc) 
-    hour=$(echo "$hour_decimal" | cut -d'.' -f1 )
+for ((i = 0; i < ${#interpolated_colors[@]}; i++)); do
+    color=$(echo "${interpolated_colors[$i]}"| cut -d',' -f2)
+    start_color=$(echo "${interpolated_colors[$i]}"| cut -d',' -f1)
+    hour_decimal=$(echo "scale=2; $i / $factor" | bc)
+    hour=$(echo "$hour_decimal" | cut -d'.' -f1)
     if [ "$hour" = "" ]; then
         hour="00"
     elif [ "$hour" -lt 10 ]; then
         hour="0$hour"
     fi
-    
+
     minute_decimal=$(echo "$hour_decimal" | cut -d'.' -f2)
     minute=$(echo "scale=0; $minute_decimal * 60 / 100" | bc)
     if [ "$minute" = "" ]; then
@@ -67,9 +93,23 @@ for ((i=0; i<${#interpolated_colors[@]}; i++)); do
     fi
 
     # if the current time is before $hour:$minute, fire and exit!
-    if [ "$current_hour" -lt "$hour" ] || ([ "$current_hour" -eq "$hour" ] && [ "$current_minute" -lt "$minute" ]); then
-        echo "Color: #$color, Time: $hour:$minute"
-        sudo rogauracore single_static $color
-        break
+    if [ "$test_mode" = true ]; then
+        r_hex=$(echo "$color" | cut -c1-2)
+        g_hex=$(echo "$color" | cut -c3-4)
+        b_hex=$(echo "$color" | cut -c5-6)
+
+        r=$(printf "%d" 0x$r_hex)
+        g=$(printf "%d" 0x$g_hex)
+        b=$(printf "%d" 0x$b_hex)
+        echo -e "\033[38;2;${r};${g};${b}mColor: $start_color (#$color), Time: $hour:$minute\033[0m"
+    else
+        if [ "$current_hour" -lt "$hour" ] || ([ "$current_hour" -eq "$hour" ] && [ "$current_minute" -lt "$minute" ]); then
+            echo "Color: #$color, Time: $hour:$minute"
+            sudo rogauracore single_static $color
+            break
+        fi
     fi
 done
+if [ "$test_mode" = true ]; then
+    echo "final color: ${colors[$num_colors-1]}"
+fi
