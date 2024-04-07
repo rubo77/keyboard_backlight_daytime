@@ -2,6 +2,7 @@
 
 # defines a set of colors, interpolates between them to create a smooth gradient
 # and then changes the keyboard backlight color to match the current time
+# uses https://github.com/wroberts/rogauracore
 
 # options for the program: -h=help, -t=test
 while getopts ":ht" opt; do
