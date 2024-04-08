@@ -15,7 +15,7 @@ This script defines a set of colors, interpolates between them to create a smoot
 - `-h`: Display the help message
 - `-t`: Test mode, print the color and time instead of changing the keyboard color
 - `-s`: Use the color defined for that time instead of interpolating between colors
-- `-c`: Set the colors to interpolate between, quotes and comma separated. For example: `-c "red,255,0,0;blue,0,0,255"`
+- `-c`: Set the colors to interpolate between, semicolon and comma separated. For example: `-c "red,255,0,0;blue,0,0,255"`
 
 ### Installation
 

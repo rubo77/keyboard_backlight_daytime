@@ -12,7 +12,7 @@ while getopts ":s:c:ht" opt; do
             echo "  -h: Display this help message"
             echo "  -t: Test mode, print the color and time instead of changing the keyboard color"
             echo "  -s: use the color defined for that time instead of interpolating between colors"
-            echo "  -c: set the colors to interpolate between, quotes and comma separated"
+            echo "  -c: set the colors to interpolate between, semicolon and comma separated"
             echo "      e.g. -c \"red,255,0,0;blue,0,0,255\""
             exit 0
             ;;
