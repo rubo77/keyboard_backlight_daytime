@@ -15,6 +15,6 @@ echo "current brightness: $number"
 if [ "$number" -gt "0" ]; then
     new_number=$((number - 1))
     echo set brightness to "$new_number"
-    sudo rogauracore brightness "$new_number"
+    rogauracore brightness "$new_number"
     echo "$new_number" > "$temp_file"
 fi
