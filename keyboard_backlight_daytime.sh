@@ -126,7 +126,7 @@ for ((i = 0; i < ${#interpolated_colors[@]}; i++)); do
     else
         if [ "$current_hour" -lt "$hour" ] || ([ "$current_hour" -eq "$hour" ] && [ "$current_minute" -lt "$minute" ]); then
             echo "Color: #$color, Time: $hour:$minute"
-            sudo rogauracore single_static $color
+            rogauracore single_static $color
             break
         fi
     fi
